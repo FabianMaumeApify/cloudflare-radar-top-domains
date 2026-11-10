@@ -46,8 +46,8 @@
         "includeGlobal": {
             "title": "Include global ranking",
             "type": "boolean",
-            "description": "Also fetch the global (no-location) top domain for each category.",
-            "default": true
+            "description": "In addition to the picked locations, also fetch the global (no-location) ranking. Off by default — tick only if you want GLOBAL rows alongside the country rows.",
+            "default": false
         }
     },
     "required": []
