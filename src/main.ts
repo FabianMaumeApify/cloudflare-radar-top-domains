@@ -23,11 +23,8 @@ interface RadarTopItem {
 }
 
 interface RadarTopResponse {
-    result: {
-        top_0: RadarTopItem[];
-        meta?: unknown;
-    };
-    success: boolean;
+    result: Record<string, RadarTopItem[] | unknown>;
+    success?: boolean;
     errors?: unknown[];
     messages?: unknown[];
 }
@@ -67,6 +64,8 @@ async function fetchTop(opts: { location?: string; category?: string }): Promise
     const params = new URLSearchParams();
     params.set('rankingType', rankingType);
     params.set('limit', String(limit));
+    // Pin the response series name so the result key is predictable ("top_main").
+    params.set('name', 'main');
     if (opts.location) params.append('location', opts.location);
     if (opts.category) params.append('domainCategory', opts.category);
     if (date) params.append('date', date);
@@ -95,7 +94,32 @@ async function fetchTop(opts: { location?: string; category?: string }): Promise
         }
 
         const json = (await res.json()) as RadarTopResponse;
-        return json.result?.top_0 ?? [];
+
+        if (json.success === false) {
+            log.warning('Cloudflare API returned success=false', { errors: json.errors, opts });
+            return [];
+        }
+
+        const result = json.result ?? {};
+        const topKeys = Object.keys(result).filter((k) => k.startsWith('top_'));
+        if (topKeys.length === 0) {
+            log.warning('No top_* key in Cloudflare response', {
+                resultKeys: Object.keys(result),
+                bodyPreview: JSON.stringify(json).slice(0, 400),
+                opts,
+            });
+            return [];
+        }
+
+        const items: RadarTopItem[] = [];
+        for (const key of topKeys) {
+            const arr = result[key];
+            if (Array.isArray(arr)) items.push(...(arr as RadarTopItem[]));
+        }
+        if (items.length === 0) {
+            log.info('Empty result set', { opts, topKeys });
+        }
+        return items;
     }
 
     throw new Error('Exhausted retries after repeated 429 responses from Cloudflare Radar');
