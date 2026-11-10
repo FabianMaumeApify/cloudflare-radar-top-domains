@@ -14,7 +14,11 @@
             },
             "rank": {
                 "type": "integer",
-                "description": "Position in the returned top list (1 = top)."
+                "description": "Position within this category for this location (1 = top in the category)."
+            },
+            "overallRank": {
+                "type": "integer",
+                "description": "Domain's raw position in Cloudflare's top-100 ranking for the location (or global)."
             },
             "domain": {
                 "type": "string",
@@ -51,15 +55,16 @@
         "overview": {
             "title": "Overview",
             "transformation": {
-                "fields": ["location", "category", "rank", "domain", "pctRankChange", "rankingType", "date"]
+                "fields": ["location", "category", "rank", "domain", "overallRank", "pctRankChange", "rankingType", "date"]
             },
             "display": {
                 "component": "table",
                 "properties": {
                     "location": { "label": "Location" },
                     "category": { "label": "Category" },
-                    "rank": { "label": "Rank" },
+                    "rank": { "label": "Category rank" },
                     "domain": { "label": "Domain" },
+                    "overallRank": { "label": "Overall rank" },
                     "pctRankChange": { "label": "% rank change" },
                     "rankingType": { "label": "Ranking type" },
                     "date": { "label": "Date" }

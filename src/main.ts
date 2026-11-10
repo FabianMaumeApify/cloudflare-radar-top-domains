@@ -23,13 +23,16 @@ interface RadarTopItem {
 }
 
 interface RadarTopResponse {
-    result: Record<string, RadarTopItem[] | unknown>;
+    result: Record<string, unknown>;
     success?: boolean;
     errors?: unknown[];
     messages?: unknown[];
 }
 
 const RADAR_BASE = 'https://api.cloudflare.com/client/v4/radar/ranking/top';
+// Cloudflare caps per-country rankings at 100; fetch the max so every category surfaces at least its top domain.
+const FETCH_SIZE = 100;
+const SERIES_NAME = 'main';
 // 1,200 req / 5 min = 4 req/sec. 350 ms spacing stays under ~2.8 req/sec with headroom.
 const RATE_DELAY_MS = 350;
 
@@ -52,22 +55,22 @@ if (!token) {
 
 const input = (await Actor.getInput<Input>()) ?? {};
 const rankingType = input.rankingType ?? 'POPULAR';
-const limit = input.limit ?? 1;
+const limit = Math.max(1, input.limit ?? 1);
 const date = input.date?.trim() || undefined;
 const includeGlobal = input.includeGlobal ?? true;
 const locations = (input.locations ?? []).map((s) => s.trim()).filter(Boolean);
-let categories = (input.categories ?? []).map((s) => s.trim()).filter(Boolean);
+const categoryFilter = new Set(
+    (input.categories ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean),
+);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchTop(opts: { location?: string; category?: string }): Promise<RadarTopItem[]> {
+async function fetchTop(opts: { location?: string }): Promise<RadarTopItem[]> {
     const params = new URLSearchParams();
     params.set('rankingType', rankingType);
-    params.set('limit', String(limit));
-    // Pin the response series name so the result key is predictable ("top_main").
-    params.set('name', 'main');
+    params.set('limit', String(FETCH_SIZE));
+    params.set('name', SERIES_NAME);
     if (opts.location) params.append('location', opts.location);
-    if (opts.category) params.append('domainCategory', opts.category);
     if (date) params.append('date', date);
 
     const url = `${RADAR_BASE}?${params.toString()}`;
@@ -101,77 +104,88 @@ async function fetchTop(opts: { location?: string; category?: string }): Promise
         }
 
         const result = json.result ?? {};
-        const topKeys = Object.keys(result).filter((k) => k.startsWith('top_'));
-        if (topKeys.length === 0) {
-            log.warning('No top_* key in Cloudflare response', {
-                resultKeys: Object.keys(result),
-                bodyPreview: JSON.stringify(json).slice(0, 400),
-                opts,
-            });
-            return [];
+        const series = result[SERIES_NAME];
+        if (Array.isArray(series)) return series as RadarTopItem[];
+
+        // Fallback: any array-valued key in result (defensive against name-key drift).
+        for (const value of Object.values(result)) {
+            if (Array.isArray(value)) return value as RadarTopItem[];
         }
 
-        const items: RadarTopItem[] = [];
-        for (const key of topKeys) {
-            const arr = result[key];
-            if (Array.isArray(arr)) items.push(...(arr as RadarTopItem[]));
-        }
-        if (items.length === 0) {
-            log.info('Empty result set', { opts, topKeys });
-        }
-        return items;
+        log.warning('No series array in Cloudflare response', {
+            resultKeys: Object.keys(result),
+            bodyPreview: JSON.stringify(json).slice(0, 400),
+            opts,
+        });
+        return [];
     }
 
     throw new Error('Exhausted retries after repeated 429 responses from Cloudflare Radar');
-}
-
-if (categories.length === 0) {
-    log.info('No categories supplied — discovering via warm-up call');
-    const warmup = await fetchTop({});
-    const seen = new Set<string>();
-    for (const item of warmup) {
-        for (const cat of item.categories ?? []) {
-            if (cat?.name) seen.add(cat.name);
-        }
-    }
-    categories = [...seen].sort();
-    log.info(`Discovered ${categories.length} categories`, { categories });
-    await sleep(RATE_DELAY_MS);
 }
 
 const locList: (string | undefined)[] = includeGlobal ? [undefined, ...locations] : [...locations];
 if (locList.length === 0) {
     throw new Error('Nothing to fetch: both `locations` is empty and `includeGlobal` is false.');
 }
-const catList: (string | undefined)[] = categories.length > 0 ? categories : [undefined];
 
 log.info(
-    `Plan: ${locList.length} locations × ${catList.length} categories = ${locList.length * catList.length} API calls`,
-    { rankingType, limit, date },
+    `Plan: ${locList.length} location(s), fetching top ${FETCH_SIZE} each, grouping by category client-side`,
+    { rankingType, limit, date, filter: [...categoryFilter] },
 );
 
 for (const location of locList) {
-    for (const category of catList) {
-        try {
-            const rows = await fetchTop({ location, category });
-            for (const row of rows) {
+    try {
+        const items = await fetchTop({ location });
+        log.info(`Fetched ${items.length} items for ${location ?? 'GLOBAL'}`);
+
+        // Group each item under every category it belongs to; keep original rank for ordering.
+        const byCategory = new Map<string, RadarTopItem[]>();
+        for (const item of items) {
+            for (const cat of item.categories ?? []) {
+                if (!cat?.name) continue;
+                const bucket = byCategory.get(cat.name) ?? [];
+                bucket.push(item);
+                byCategory.set(cat.name, bucket);
+            }
+        }
+
+        const categoryNames =
+            categoryFilter.size > 0
+                ? [...byCategory.keys()].filter((name) => categoryFilter.has(name.toLowerCase()))
+                : [...byCategory.keys()].sort();
+
+        if (categoryFilter.size > 0 && categoryNames.length === 0) {
+            log.warning(
+                `No categories matched the filter for ${location ?? 'GLOBAL'}. Available categories in this slice:`,
+                { available: [...byCategory.keys()].sort() },
+            );
+        }
+
+        for (const categoryName of categoryNames) {
+            const ranked = (byCategory.get(categoryName) ?? [])
+                .slice()
+                .sort((a, b) => a.rank - b.rank)
+                .slice(0, limit);
+
+            for (const [i, item] of ranked.entries()) {
                 await Actor.pushData({
                     location: location ?? 'GLOBAL',
-                    category: category ?? null,
-                    rank: row.rank,
-                    domain: row.domain,
-                    pctRankChange: row.pctRankChange ?? 0,
-                    categories: row.categories ?? [],
+                    category: categoryName,
+                    rank: i + 1,
+                    overallRank: item.rank,
+                    domain: item.domain,
+                    pctRankChange: item.pctRankChange ?? 0,
+                    categories: item.categories ?? [],
                     rankingType,
                     date: date ?? null,
                 });
                 state.itemsPushed++;
             }
-        } catch (err) {
-            log.exception(err as Error, 'Failed to fetch top domains', { location, category });
         }
-        await sleep(RATE_DELAY_MS);
+    } catch (err) {
+        log.exception(err as Error, 'Failed to fetch for location', { location });
     }
+    await sleep(RATE_DELAY_MS);
 }
 
 log.info(`Done. Pushed ${state.itemsPushed} items across ${state.requests} API requests.`);

@@ -16,7 +16,7 @@
             "title": "Domain categories",
             "type": "array",
             "editor": "stringList",
-            "description": "Cloudflare Radar category names to filter by (e.g. Technology, Business, News & Media). Empty = auto-discover the full category list via a warm-up API call, then iterate all of them.",
+            "description": "Cloudflare Radar category names to keep in the output (case-insensitive match against what Cloudflare returns on each domain). Empty = emit every category present in each location's top 100.",
             "default": [],
             "prefill": ["Technology", "Business", "News & Media"]
         },
