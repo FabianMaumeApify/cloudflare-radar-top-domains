@@ -62,6 +62,25 @@ apify run
 | `limit` | `1` | Top N per (location, category) pair. |
 | `date` | *(latest)* | Optional — rankings refresh daily, last 24 h. |
 
+## Available categories
+
+Cloudflare Radar shares its taxonomy with Cloudflare Gateway. The top-level category names you can pass to `categories` (or will see on each domain) are:
+
+| | | |
+|---|---|---|
+| Ads | Adult Themes | Business & Economy |
+| Education | Entertainment | Gambling |
+| Government & Politics | Health | Internet Communication |
+| Job Search & Careers | Miscellaneous | Questionable Content |
+| Real Estate | Religion | Shopping & Auctions |
+| Society & Lifestyle | Sports | Technology |
+| Travel | Vehicles | Violence |
+| Weather | Security Risks | CIPA |
+
+Cloudflare also returns **sub-category** names on individual domains (e.g. `Content Servers`, `Information Technology`, `Social Networks`). Those work in the `categories` filter too — case-insensitive matching is used against whatever Cloudflare attaches to each domain.
+
+The canonical list, including every sub-category and ID, lives at the [Cloudflare Gateway domain categories reference](https://developers.cloudflare.com/cloudflare-one/policies/gateway/domain-categories/). There is no API endpoint that returns the list directly; leave `categories` empty to see every category present in your result set.
+
 ## How it works
 
 The Actor calls `GET https://api.cloudflare.com/client/v4/radar/ranking/top` for every (location, category) combination with an authenticated Bearer token. Requests are spaced ~350 ms apart to stay well under Cloudflare's global ceiling of **1,200 requests per 5 minutes per token**; 429 responses are respected via the `retry-after` header.
