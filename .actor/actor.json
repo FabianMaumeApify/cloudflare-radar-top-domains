@@ -1,0 +1,22 @@
+{
+	"$schema": "https://apify.com/schemas/v1/actor.ide.json",
+	"actorSpecification": 1,
+	"name": "cloudflare-radar-top-domains",
+	"title": "Cloudflare Radar - Top Domains",
+	"description": "Fetches the top domain(s) per country and per category from the Cloudflare Radar API.",
+	"version": "0.0",
+	"buildTag": "latest",
+	"meta": {
+		"templateId": "ts-empty",
+		"generatedBy": "Claude Code with Claude Opus 4.7"
+	},
+	"inputSchema": "./input_schema.json",
+	"outputSchema": "./output_schema.json",
+	"storages": {
+		"dataset": "./dataset_schema.json"
+	},
+	"environmentVariables": {
+		"CLOUDFLARE_API_TOKEN": "@CLOUDFLARE_API_TOKEN"
+	},
+	"dockerfile": "../Dockerfile"
+}

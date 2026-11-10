@@ -1,0 +1,54 @@
+{
+    "$schema": "https://apify.com/schemas/v1/input.ide.json",
+    "title": "Cloudflare Radar top domains",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "locations": {
+            "title": "Locations (ISO-2 codes)",
+            "type": "array",
+            "editor": "stringList",
+            "description": "ISO 3166-1 alpha-2 country codes to fetch per-country top domains for. Example: US, DE, JP. Empty = skip per-country calls.",
+            "default": ["US", "DE", "JP", "GB", "FR", "BR", "IN", "CN", "RU", "MX"],
+            "prefill": ["US", "DE", "JP", "GB", "FR", "BR", "IN", "CN", "RU", "MX"]
+        },
+        "categories": {
+            "title": "Domain categories",
+            "type": "array",
+            "editor": "stringList",
+            "description": "Cloudflare Radar category names to filter by (e.g. Technology, Business, News & Media). Empty = auto-discover the full category list via a warm-up API call, then iterate all of them.",
+            "default": [],
+            "prefill": ["Technology", "Business", "News & Media"]
+        },
+        "rankingType": {
+            "title": "Ranking type",
+            "type": "string",
+            "description": "Which Cloudflare Radar ranking to pull.",
+            "editor": "select",
+            "enum": ["POPULAR", "TRENDING_RISE", "TRENDING_STEADY"],
+            "enumTitles": ["Popular", "Trending (Rise)", "Trending (Steady)"],
+            "default": "POPULAR"
+        },
+        "limit": {
+            "title": "Top N per combination",
+            "type": "integer",
+            "description": "How many top domains to fetch per (location, category) combination. Default 1 returns just the #1 domain for each pair.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 100
+        },
+        "date": {
+            "title": "Date (YYYY-MM-DD)",
+            "type": "string",
+            "description": "Optional. Leave empty for the most recent data (rankings refresh daily).",
+            "editor": "textfield"
+        },
+        "includeGlobal": {
+            "title": "Include global ranking",
+            "type": "boolean",
+            "description": "Also fetch the global (no-location) top domain for each category.",
+            "default": true
+        }
+    },
+    "required": []
+}

@@ -1,0 +1,70 @@
+{
+    "$schema": "https://apify.com/schemas/v1/dataset.ide.json",
+    "actorSpecification": 1,
+    "fields": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "ISO 3166-1 alpha-2 code, or 'GLOBAL' for the un-filtered ranking."
+            },
+            "category": {
+                "type": ["string", "null"],
+                "description": "Cloudflare Radar category name used as the filter, or null for an all-category query."
+            },
+            "rank": {
+                "type": "integer",
+                "description": "Position in the returned top list (1 = top)."
+            },
+            "domain": {
+                "type": "string",
+                "description": "Domain name."
+            },
+            "pctRankChange": {
+                "type": "number",
+                "description": "Percentage rank change vs the previous period."
+            },
+            "categories": {
+                "type": "array",
+                "description": "All categories the domain belongs to, as returned by Cloudflare.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "integer" },
+                        "name": { "type": "string" },
+                        "superCategoryId": { "type": "integer" }
+                    }
+                }
+            },
+            "rankingType": {
+                "type": "string",
+                "description": "POPULAR, TRENDING_RISE, or TRENDING_STEADY."
+            },
+            "date": {
+                "type": ["string", "null"],
+                "description": "Date passed to the API, or null for 'most recent'."
+            }
+        },
+        "required": ["location", "rank", "domain", "rankingType"]
+    },
+    "views": {
+        "overview": {
+            "title": "Overview",
+            "transformation": {
+                "fields": ["location", "category", "rank", "domain", "pctRankChange", "rankingType", "date"]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "location": { "label": "Location" },
+                    "category": { "label": "Category" },
+                    "rank": { "label": "Rank" },
+                    "domain": { "label": "Domain" },
+                    "pctRankChange": { "label": "% rank change" },
+                    "rankingType": { "label": "Ranking type" },
+                    "date": { "label": "Date" }
+                }
+            }
+        }
+    }
+}
