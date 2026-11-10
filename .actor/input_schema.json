@@ -38,10 +38,10 @@
             "maximum": 100
         },
         "date": {
-            "title": "Date (YYYY-MM-DD)",
+            "title": "Date",
             "type": "string",
-            "description": "Optional. Leave empty for the most recent data (rankings refresh daily).",
-            "editor": "textfield"
+            "description": "Optional. Leave empty for the most recent data (rankings refresh daily and cover the last 24 h).",
+            "editor": "datepicker"
         },
         "includeGlobal": {
             "title": "Include global ranking",
