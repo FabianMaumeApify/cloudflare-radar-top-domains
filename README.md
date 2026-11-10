@@ -74,7 +74,7 @@ The Actor calls `GET https://api.cloudflare.com/client/v4/radar/ranking/top` for
 
 ## Cost
 
-Beyond the usual Apify compute cost, the Actor itself charges nothing extra — the Cloudflare Radar API is free on every Cloudflare plan.
+Beyond the usual Apify compute cost, the Actor itself charges nothing extra.
 
 ## References
 
