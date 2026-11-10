@@ -56,12 +56,11 @@ apify run
 
 | Input | Default | Notes |
 |---|---|---|
-| `locations` | 10 major countries | ISO-2 codes. Leave empty to skip per-country calls. |
-| `categories` | *(auto-discover)* | Cloudflare Radar category names. Empty = one warm-up call harvests the full list, then iterates everything. |
+| `locations` | `GLOBAL` + 10 major countries | ISO-2 codes and/or the literal `GLOBAL` for the un-filtered worldwide ranking. |
+| `categories` | *(all present)* | Cloudflare Radar category names to keep in the output. Empty = emit every category found. |
 | `rankingType` | `POPULAR` | Also `TRENDING_RISE` or `TRENDING_STEADY`. |
 | `limit` | `1` | Top N per (location, category) pair. |
-| `date` | *(latest)* | Optional `YYYY-MM-DD` — rankings cover the last 24 h and refresh daily. |
-| `includeGlobal` | `true` | Also fetch the global ranking per category. |
+| `date` | *(latest)* | Optional — rankings refresh daily, last 24 h. |
 
 ## How it works
 

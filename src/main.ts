@@ -6,7 +6,6 @@ interface Input {
     rankingType?: 'POPULAR' | 'TRENDING_RISE' | 'TRENDING_STEADY';
     limit?: number;
     date?: string;
-    includeGlobal?: boolean;
 }
 
 interface RadarCategory {
@@ -57,8 +56,19 @@ const input = (await Actor.getInput<Input>()) ?? {};
 const rankingType = input.rankingType ?? 'POPULAR';
 const limit = Math.max(1, input.limit ?? 1);
 const date = input.date?.trim() || undefined;
-const includeGlobal = input.includeGlobal ?? true;
-const locations = (input.locations ?? []).map((s) => s.trim()).filter(Boolean);
+
+// "GLOBAL" (case-insensitive) in the locations list means "no location filter"; everything else is passed as an ISO-2 code.
+const locList: (string | undefined)[] = [];
+const seen = new Set<string>();
+for (const raw of input.locations ?? []) {
+    const value = raw.trim();
+    if (!value) continue;
+    const key = value.toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    locList.push(key === 'GLOBAL' ? undefined : value);
+}
+
 const categoryFilter = new Set(
     (input.categories ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean),
 );
@@ -123,9 +133,8 @@ async function fetchTop(opts: { location?: string }): Promise<RadarTopItem[]> {
     throw new Error('Exhausted retries after repeated 429 responses from Cloudflare Radar');
 }
 
-const locList: (string | undefined)[] = includeGlobal ? [undefined, ...locations] : [...locations];
 if (locList.length === 0) {
-    throw new Error('Nothing to fetch: both `locations` is empty and `includeGlobal` is false.');
+    throw new Error('Nothing to fetch: `locations` is empty. Add country codes or `GLOBAL`.');
 }
 
 log.info(

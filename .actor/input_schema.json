@@ -5,12 +5,12 @@
     "schemaVersion": 1,
     "properties": {
         "locations": {
-            "title": "Locations (ISO-2 codes)",
+            "title": "Locations",
             "type": "array",
             "editor": "stringList",
-            "description": "ISO 3166-1 alpha-2 country codes to fetch per-country top domains for. Example: US, DE, JP. Empty = skip per-country calls.",
-            "default": ["US", "DE", "JP", "GB", "FR", "BR", "IN", "CN", "RU", "MX"],
-            "prefill": ["US", "DE", "JP", "GB", "FR", "BR", "IN", "CN", "RU", "MX"]
+            "description": "ISO 3166-1 alpha-2 country codes (e.g. US, DE, JP) and/or the literal `GLOBAL` for the un-filtered worldwide ranking.",
+            "default": ["GLOBAL", "US", "DE", "JP", "GB", "FR", "BR", "IN", "CN", "RU", "MX"],
+            "prefill": ["GLOBAL", "US", "DE", "JP", "GB", "FR", "BR", "IN", "CN", "RU", "MX"]
         },
         "categories": {
             "title": "Domain categories",
@@ -42,12 +42,6 @@
             "type": "string",
             "description": "Optional. Leave empty for the most recent data (rankings refresh daily and cover the last 24 h).",
             "editor": "datepicker"
-        },
-        "includeGlobal": {
-            "title": "Include global ranking",
-            "type": "boolean",
-            "description": "In addition to the picked locations, also fetch the global (no-location) ranking. Off by default — tick only if you want GLOBAL rows alongside the country rows.",
-            "default": false
         }
     },
     "required": []
