@@ -64,22 +64,22 @@ apify run
 
 ## Available categories
 
-Cloudflare Radar shares its taxonomy with Cloudflare Gateway. The top-level category names you can pass to `categories` (or will see on each domain) are:
+Cloudflare's full taxonomy (used by Cloudflare Gateway) has 24 top-level categories, but the **Radar ranking endpoint tags domains with the sub-category level**, not the top-level. So the names you actually see on returned domains are things like:
 
 | | | |
 |---|---|---|
-| Ads | Adult Themes | Business & Economy |
-| Education | Entertainment | Gambling |
-| Government & Politics | Health | Internet Communication |
-| Job Search & Careers | Miscellaneous | Questionable Content |
-| Real Estate | Religion | Shopping & Auctions |
-| Society & Lifestyle | Sports | Technology |
-| Travel | Vehicles | Violence |
-| Weather | Security Risks | CIPA |
+| APIs | Advertisements | Artificial Intelligence |
+| Audio Streaming | Business | Chat |
+| Content Servers | Ecommerce | File Sharing |
+| Government/Legal | Information Security | Information Technology |
+| Instant Messengers | Internet Phone & VOIP | News & Media |
+| Personal Finance | Photography | Search Engines |
+| Shareware/Freeware | Social Networks | Technology |
+| Trackers/Analytics | Video Streaming | Webmail |
 
-Cloudflare also returns **sub-category** names on individual domains (e.g. `Content Servers`, `Information Technology`, `Social Networks`). Those work in the `categories` filter too — case-insensitive matching is used against whatever Cloudflare attaches to each domain.
+The exact set depends on the location. A category that exists in Cloudflare's taxonomy (e.g. `Real Estate`, `Travel`, `Gambling`) may simply have no domains in a given country's top 100 and will produce zero rows.
 
-The canonical list, including every sub-category and ID, lives at the [Cloudflare Gateway domain categories reference](https://developers.cloudflare.com/cloudflare-one/policies/gateway/domain-categories/). There is no API endpoint that returns the list directly; leave `categories` empty to see every category present in your result set.
+**Recommended workflow:** leave `categories` empty on the first run. The Actor logs the categories it actually found per location, so you can pick from those. For reference, the full Cloudflare taxonomy (top-level + every sub-category and ID) lives at the [Cloudflare Gateway domain categories reference](https://developers.cloudflare.com/cloudflare-one/policies/gateway/domain-categories/). No API endpoint returns the list directly.
 
 ## How it works
 
